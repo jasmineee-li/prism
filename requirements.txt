@@ -1,0 +1,7 @@
+pdfplumber>=0.11
+statcheck       # Python port
+grim>=0.1.4
+pandas
+scipy
+chainlit>=1.0.300
+pytest
