@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 import json
 import pandas as pd
+import uuid
+from prism.supabase_client import get_supabase_client
 
 from prism.pipeline import run_checks
 
@@ -94,11 +96,46 @@ def upload_file():
             transformed_results = transform_pipeline_results(results)
             print("Results transformed successfully")
 
+            # === Supabase integration ===
+            supabase = get_supabase_client()
+
+            bucket_name = "documents"  # Ensure this bucket exists and is public in Supabase dashboard
+
+            # Upload file to bucket using a UUID key to avoid collisions
+            doc_id = str(uuid.uuid4())
+            storage_path = f"{doc_id}/{file.filename}"
+            with open(tmp_path, "rb") as pdf_file:
+                supabase.storage.from_(bucket_name).upload(
+                    storage_path, pdf_file.read()
+                )
+
+            # Build public URL for public bucket
+            supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+            public_url = (
+                f"{supabase_url}/storage/v1/object/public/{bucket_name}/{storage_path}"
+            )
+
+            # Insert metadata row
+            doc_record = {
+                "id": doc_id,
+                "filename": file.filename,
+                "storage_path": storage_path,
+                "public_url": public_url,
+                "uploaded_at": "now()",  # Supabase interprets literal string in SQL insert
+                "results": json.dumps(transformed_results),
+            }
+            try:
+                supabase.table("documents").insert(doc_record).execute()
+            except Exception as insert_err:
+                print(f"Error inserting document record: {insert_err}")
+
             return jsonify(
                 {
                     "success": True,
+                    "document_id": doc_id,
                     "filename": file.filename,
                     "results": transformed_results,
+                    "public_url": public_url,
                 }
             )
 
@@ -125,6 +162,43 @@ def upload_get():
         ),
         405,
     )
+
+
+@app.route("/api/documents", methods=["GET"])
+def list_documents():
+    """Return metadata for all documents stored in Supabase."""
+    try:
+        supabase = get_supabase_client()
+        response = (
+            supabase.table("documents")
+            .select("id, filename, public_url, uploaded_at")
+            .order("uploaded_at", desc=True)
+            .execute()
+        )
+        docs = response.data if hasattr(response, "data") else response
+        return jsonify({"documents": docs})
+    except Exception as e:
+        print(f"Error listing documents: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/documents/<doc_id>", methods=["GET"])
+def document_detail(doc_id):
+    """Return metadata and analysis results for a single document."""
+    try:
+        supabase = get_supabase_client()
+        response = (
+            supabase.table("documents").select("*").eq("id", doc_id).single().execute()
+        )
+        record = response.data if hasattr(response, "data") else response
+        if not record:
+            return jsonify({"error": "Document not found"}), 404
+        # results is stored as JSON string; parse
+        record["results"] = json.loads(record.get("results", "{}"))
+        return jsonify(record)
+    except Exception as e:
+        print(f"Error fetching document {doc_id}: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/health", methods=["GET"])
