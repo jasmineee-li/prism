@@ -109,8 +109,7 @@ import json
 
 @cl.on_message
 async def main(message: cl.Message):
-    if not message.elements:  # user typed text only
-        await cl.Avatar(name="Prism", path=None).send()
+    if isinstance(message, str) or not getattr(message, "elements", None):
         await cl.Message("Please upload a PDF.").send()
         return
 

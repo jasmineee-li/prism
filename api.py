@@ -9,6 +9,7 @@ import uuid
 from prism.supabase_client import get_supabase_client
 
 from prism.pipeline import run_checks
+import openai
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -205,6 +206,36 @@ def document_detail(doc_id):
 def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy"})
+
+
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    """Proxy chat completion request to OpenAI, keeping the API key on the server."""
+    try:
+        data = request.get_json(force=True)
+        messages = data.get("messages", [])
+        if not messages:
+            return jsonify({"error": "No messages provided"}), 400
+
+        # Allow optional additional context
+        context = data.get("context")
+        if context:
+            messages = [{"role": "system", "content": context}] + messages
+
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if not openai.api_key:
+            return jsonify({"error": "OPENAI_API_KEY not set on server"}), 500
+
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",  # GPT-4o 2024- model, adjust if needed
+            messages=messages,
+            temperature=0.7,
+        )
+        assistant_msg = response.choices[0].message.content
+        return jsonify({"assistant": assistant_msg})
+    except Exception as e:
+        print(f"Error in /api/chat: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
