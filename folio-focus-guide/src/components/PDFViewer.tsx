@@ -2,8 +2,8 @@ import { useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import { ChevronUp, ChevronDown, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 // Set up PDF.js worker
@@ -16,14 +16,12 @@ interface PDFViewerProps {
 
 export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.2);
+  const [scale, setScale] = useState<number>(1.0);
   const { toast } = useToast();
 
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
       setNumPages(numPages);
-      setPageNumber(1);
     },
     []
   );
@@ -36,17 +34,8 @@ export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
     });
   }, [toast]);
 
-  const changePage = useCallback(
-    (offset: number) => {
-      setPageNumber((prevPageNumber) =>
-        Math.min(Math.max(prevPageNumber + offset, 1), numPages)
-      );
-    },
-    [numPages]
-  );
-
   const changeScale = useCallback((delta: number) => {
-    setScale((prevScale) => Math.min(Math.max(prevScale + delta, 0.5), 3));
+    setScale((prev) => Math.max(0.5, Math.min(3, prev + delta)));
   }, []);
 
   const source = file ? file : url ? url : null;
@@ -61,30 +50,9 @@ export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
 
   return (
     <div className="flex flex-col h-full bg-surface border border-border-light rounded-lg overflow-hidden">
-      {/* PDF Controls */}
-      <div className="flex items-center justify-between p-4 border-b border-border-light bg-surface-secondary">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => changePage(-1)}
-            disabled={pageNumber <= 1}
-          >
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-[80px] text-center">
-            {pageNumber} / {numPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => changePage(1)}
-            disabled={pageNumber >= numPages}
-          >
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </div>
-
+      {/* Controls */}
+      <div className="flex items-center justify-between p-4 bg-surface border-b border-border-light">
+        {/* Zoom Controls */}
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -121,13 +89,19 @@ export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
               </div>
             }
           >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={true} // Enable text selection
-              renderAnnotationLayer={true} // Show annotations if any
-              className="shadow-medium rounded-lg overflow-hidden"
-            />
+            {/* Render all pages */}
+            <div className="space-y-4">
+              {Array.from(new Array(numPages), (el, index) => (
+                <Page
+                  key={`page_${index + 1}`}
+                  pageNumber={index + 1}
+                  scale={scale}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                  className="shadow-medium rounded-lg overflow-hidden"
+                />
+              ))}
+            </div>
           </Document>
         </div>
       </div>

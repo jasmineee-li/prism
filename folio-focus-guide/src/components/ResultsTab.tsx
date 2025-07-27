@@ -40,7 +40,17 @@ interface AnalysisResults {
   grim_checks: GrimResult[];
 }
 
-async function uploadAndAnalyze(file: File): Promise<AnalysisResults> {
+interface UploadResponse {
+  results: AnalysisResults;
+  review?: string;
+}
+
+interface DocumentData {
+  results: AnalysisResults;
+  review?: string;
+}
+
+async function uploadAndAnalyze(file: File): Promise<UploadResponse> {
   console.log(
     "uploadAndAnalyze called with file:",
     file.name,
@@ -87,7 +97,7 @@ async function uploadAndAnalyze(file: File): Promise<AnalysisResults> {
 
     const data = await response.json();
     console.log("Upload successful, received data:", data);
-    return data.results;
+    return { results: data.results, review: data.review };
   } catch (error) {
     console.error("Upload error:", error);
     throw error;
@@ -109,8 +119,9 @@ export function ResultsTab({
       setError(null);
 
       uploadAndAnalyze(file)
-        .then((analysisResults) => {
-          setResults(analysisResults);
+        .then((uploadResponse) => {
+          setResults(uploadResponse.results);
+          setReview(uploadResponse.review || null);
         })
         .catch((err) => {
           setError(err.message);
@@ -128,11 +139,9 @@ export function ResultsTab({
           if (!res.ok) {
             throw new Error(`HTTP ${res.status}`);
           }
-          const data = await res.json();
-          return data.results;
-        })
-        .then((analysisResults) => {
-          setResults(analysisResults);
+          const data: DocumentData = await res.json();
+          setResults(data.results);
+          setReview(data.review || null); // Use stored review
         })
         .catch((err) => {
           setError(err.message);
@@ -143,24 +152,6 @@ export function ResultsTab({
       setError(null);
     }
   }, [file, documentId]);
-
-  useEffect(() => {
-    if (results && !review) {
-      // fetch review once
-      fetch("http://127.0.0.1:5000/api/review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          analysis: JSON.stringify(results).slice(0, 8000),
-        }),
-      })
-        .then(async (res) => {
-          const data = await res.json();
-          if (res.ok) setReview(data.review);
-        })
-        .catch(() => {});
-    }
-  }, [results]);
 
   if (!file && !documentId) {
     return (

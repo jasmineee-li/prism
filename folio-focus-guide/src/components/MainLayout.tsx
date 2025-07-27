@@ -11,6 +11,7 @@ import { FileUpload } from "./FileUpload";
 import { ResultsTab } from "./ResultsTab";
 import { AssistantTab } from "./AssistantTab";
 import { DocumentGallery } from "./DocumentGallery";
+import { ArxivGallery } from "./ArxivGallery";
 import { BarChart3, MessageSquare } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -53,6 +54,11 @@ export function MainLayout() {
 
             {/* Gallery */}
             <DocumentGallery />
+
+            {/* arXiv Section */}
+            <div className="mt-12">
+              <ArxivGallery />
+            </div>
           </div>
         ) : (
           /* Analysis State */
