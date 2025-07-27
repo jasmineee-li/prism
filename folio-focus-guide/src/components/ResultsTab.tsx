@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 
 interface ResultsTabProps {
-  file: File | null;
+  file?: File | null;
+  documentId?: string | null;
 }
 
 interface StatTestResult {
@@ -93,7 +94,10 @@ async function uploadAndAnalyze(file: File): Promise<AnalysisResults> {
   }
 }
 
-export function ResultsTab({ file }: ResultsTabProps) {
+export function ResultsTab({
+  file = null,
+  documentId = null,
+}: ResultsTabProps) {
   const [results, setResults] = useState<AnalysisResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,13 +118,32 @@ export function ResultsTab({ file }: ResultsTabProps) {
         .finally(() => {
           setLoading(false);
         });
+    } else if (documentId) {
+      // Fetch analysis results for stored document
+      setLoading(true);
+      setError(null);
+      fetch(`http://127.0.0.1:5000/api/documents/${documentId}`)
+        .then(async (res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const data = await res.json();
+          return data.results;
+        })
+        .then((analysisResults) => {
+          setResults(analysisResults);
+        })
+        .catch((err) => {
+          setError(err.message);
+        })
+        .finally(() => setLoading(false));
     } else {
       setResults(null);
       setError(null);
     }
-  }, [file]);
+  }, [file, documentId]);
 
-  if (!file) {
+  if (!file && !documentId) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center">
         <FileText className="h-16 w-16 text-muted-foreground mb-4" />

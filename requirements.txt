@@ -5,3 +5,4 @@ pandas
 scipy
 chainlit>=1.0.300
 pytest
+supabase>=2.4.0
