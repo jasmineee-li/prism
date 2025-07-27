@@ -238,5 +238,40 @@ def chat():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/review", methods=["POST"])
+def review():
+    """Generate technical sidebar review using OpenAI based on analysis JSON or plain text provided by client."""
+    try:
+        data = request.get_json(force=True)
+        analysis_text = data.get("analysis")
+        if not analysis_text:
+            return jsonify({"error": "Missing analysis"}), 400
+
+        prompt = (
+            data.get("prompt")
+            or """Role & Scope\nYou are a research-oriented AI. Analyse the attached paper and deliver a concise yet comprehensive technical review suitable for a sidebar display (≈350 words max).\n\nOutput format (plain text only)\n\nKey Findings (≤4 bullets) – one-line takeaways.\n\nStat & Math Check (≤5 bullets) – name each test, note any inconsistencies or typos.\n\nMethod & Data Quality (≤5 bullets) – comment on assumptions, outliers, missing data, bias controls.\n\nReproducibility Score (1–10) – single line.\n\nHow to Raise the Score (≤5 bullets) – specific, actionable fixes.\n\nEvaluation criteria\n• Verify calculations (p-values, dfs, effect sizes).\n• Judge the appropriateness of analytical techniques, significance thresholds, and multiple-comparison controls.\n• Assess transparency: data/code availability, preregistration, documentation.\n• Consider handling of data integrity issues (outliers, missing data, bias).\n\nStyle guidelines\n• Bullet points only; keep each bullet under 120 characters.\n• No tables, markdown headings, or fancy formatting—plain text bullets.\n• Use succinct technical language (e.g., “ANCOVA F(5,222)=4.9 OK”).\n\nDeliver just the sidebar text—no extra commentary."""
+        )
+
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        if not openai.api_key:
+            return jsonify({"error": "OPENAI_API_KEY not set"}), 500
+
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": analysis_text},
+        ]
+
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.5,
+        )
+        review_text = response.choices[0].message.content.strip()
+        return jsonify({"review": review_text})
+    except Exception as e:
+        print(f"Error in /api/review: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

@@ -101,6 +101,7 @@ export function ResultsTab({
   const [results, setResults] = useState<AnalysisResults | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [review, setReview] = useState<string | null>(null);
 
   useEffect(() => {
     if (file) {
@@ -142,6 +143,24 @@ export function ResultsTab({
       setError(null);
     }
   }, [file, documentId]);
+
+  useEffect(() => {
+    if (results && !review) {
+      // fetch review once
+      fetch("http://127.0.0.1:5000/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysis: JSON.stringify(results).slice(0, 8000),
+        }),
+      })
+        .then(async (res) => {
+          const data = await res.json();
+          if (res.ok) setReview(data.review);
+        })
+        .catch(() => {});
+    }
+  }, [results]);
 
   if (!file && !documentId) {
     return (
@@ -198,6 +217,17 @@ export function ResultsTab({
 
   return (
     <div className="space-y-6 p-4">
+      {/* AI Technical Review */}
+      {review && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>AI Technical Review</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <pre className="whitespace-pre-wrap text-sm">{review}</pre>
+          </CardContent>
+        </Card>
+      )}
       {/* GRIM Test Results */}
       {grimResults.length > 0 && (
         <Card>
