@@ -53,51 +53,52 @@ export default function DocumentDetail() {
   return (
     <div className="container mx-auto px-4 py-6">
       <h2 className="text-xl font-semibold mb-4">{doc.filename}</h2>
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="h-[calc(100vh-160px)]"
-      >
-        <ResizablePanel defaultSize={65} minSize={30}>
-          <PDFViewer url={doc.public_url} />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={35} minSize={25}>
-          <Card className="h-full flex flex-col bg-surface border-border-light shadow-medium ml-2">
-            <Tabs defaultValue="results" className="flex flex-col h-full">
-              <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
-                <TabsTrigger
+      <div className="h-[calc(100vh-80px)]">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          <ResizablePanel defaultSize={65} minSize={30}>
+            <div className="h-full overflow-y-auto">
+              <PDFViewer url={doc.public_url} />
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={35} minSize={25}>
+            <Card className="h-full flex flex-col bg-surface border-border-light shadow-medium ml-2">
+              <Tabs defaultValue="results" className="h-full">
+                <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
+                  <TabsTrigger
+                    value="results"
+                    className="flex items-center gap-2"
+                  >
+                    <BarChart3 className="h-4 w-4" />
+                    Results
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="assistant"
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Assistant
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent
                   value="results"
-                  className="flex items-center gap-2"
+                  className="h-[calc(100%-80px)] overflow-y-auto"
                 >
-                  <BarChart3 className="h-4 w-4" />
-                  Results
-                </TabsTrigger>
-                <TabsTrigger
+                  <ResultsTab documentId={doc.id} />
+                </TabsContent>
+
+                <TabsContent
                   value="assistant"
-                  className="flex items-center gap-2"
+                  className="h-[calc(100%-80px)] overflow-y-auto"
                 >
-                  <MessageSquare className="h-4 w-4" />
-                  Assistant
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="results"
-                className="flex-1 m-0 overflow-hidden"
-              >
-                <ResultsTab documentId={doc.id} />
-              </TabsContent>
-
-              <TabsContent
-                value="assistant"
-                className="flex-1 m-0 overflow-hidden"
-              >
-                <AssistantTab documentId={doc.id} />
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+                  <AssistantTab documentId={doc.id} />
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </div>
   );
 }

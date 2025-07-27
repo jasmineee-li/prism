@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import { ChevronUp, ChevronDown, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -107,8 +109,8 @@ export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
       </div>
 
       {/* PDF Document */}
-      <div className="flex-1 overflow-auto p-4 bg-muted/30">
-        <div className="flex justify-center">
+      <div className="flex-1 overflow-y-auto bg-muted/30">
+        <div className="flex justify-center p-4">
           <Document
             file={source}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -122,8 +124,8 @@ export function PDFViewer({ file = null, url = null }: PDFViewerProps) {
             <Page
               pageNumber={pageNumber}
               scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
+              renderTextLayer={true} // Enable text selection
+              renderAnnotationLayer={true} // Show annotations if any
               className="shadow-medium rounded-lg overflow-hidden"
             />
           </Document>

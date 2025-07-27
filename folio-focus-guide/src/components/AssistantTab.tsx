@@ -116,7 +116,7 @@ export function AssistantTab({
       </CardHeader>
 
       {/* Messages */}
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
+      <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-4">
           {messages.map((m, idx) => (
             <Card key={idx} className="bg-surface border-border-light">
@@ -132,7 +132,7 @@ export function AssistantTab({
             </p>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Input */}
       <div className="p-4 border-t border-border-light">
