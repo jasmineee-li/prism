@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { PDFViewer } from "@/components/PDFViewer";
 import { ResultsTab } from "@/components/ResultsTab";
+import { AssistantTab } from "@/components/AssistantTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquare } from "lucide-react";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -60,13 +63,38 @@ export default function DocumentDetail() {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={35} minSize={25}>
           <Card className="h-full flex flex-col bg-surface border-border-light shadow-medium ml-2">
-            <div className="flex items-center gap-2 p-4 border-b border-border-light">
-              <BarChart3 className="h-4 w-4" />
-              <span className="font-medium">Results</span>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <ResultsTab documentId={doc.id} />
-            </div>
+            <Tabs defaultValue="results" className="flex flex-col h-full">
+              <TabsList className="grid w-full grid-cols-2 m-4 mb-0">
+                <TabsTrigger
+                  value="results"
+                  className="flex items-center gap-2"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Results
+                </TabsTrigger>
+                <TabsTrigger
+                  value="assistant"
+                  className="flex items-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Assistant
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="results"
+                className="flex-1 m-0 overflow-hidden"
+              >
+                <ResultsTab documentId={doc.id} />
+              </TabsContent>
+
+              <TabsContent
+                value="assistant"
+                className="flex-1 m-0 overflow-hidden"
+              >
+                <AssistantTab documentId={doc.id} />
+              </TabsContent>
+            </Tabs>
           </Card>
         </ResizablePanel>
       </ResizablePanelGroup>
