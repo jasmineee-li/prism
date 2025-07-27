@@ -16,7 +16,7 @@ export function MainLayout() {
       {/* Header */}
       <header className="bg-surface border-b border-border-light">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-text-primary">PDF Research Analyzer</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Prism</h1>
           <p className="text-muted-foreground">
             Upload and analyze research papers with StatCheck and GRIM tests
           </p>
